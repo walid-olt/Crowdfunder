@@ -1,0 +1,19 @@
+info:
+  name: List users (ADMIN)
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: "{{baseUrl}}users?role=OWNER"
+  params:
+    - name: role
+      value: OWNER
+      type: query
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

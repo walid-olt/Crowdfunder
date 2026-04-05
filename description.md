@@ -45,7 +45,7 @@ A secure, scalable backend API designed to manage a crowdfunding platform. The s
 
 ## 4. Core Business Rules (Domain Logic)
 1.  **Investment Limits:** An investor *cannot* invest more than 50% of the total target capital of a single project (or the specific limit set by the owner).
-2.  **Capital Overflow:** An investment transaction must be rejected if the amount exceeds the remaining capital needed. 
+2.  **Capital Overflow:** An investment transaction must be rejected if the amount exceeds the remaining capital needed.
 3.  **State Machine:** * Investments are ONLY allowed if the project status is `OPEN`.
     * **Auto-Close Trigger:** The system MUST automatically update the project status to `CLOSED` the moment `currentCapital` reaches `targetCapital`.
 4.  **Dynamic Calculations:** Ownership percentages must be calculated dynamically based on `amount_invested / target_capital`.

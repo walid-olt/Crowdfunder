@@ -1,0 +1,24 @@
+info:
+  name: Update project (OWNER)
+  type: http
+  seq: 5
+
+http:
+  method: PATCH
+  url: "{{baseUrl}}projects/{{exampleProjectId}}"
+  body:
+    type: json
+    data: |
+      {
+        "description": "Updated description",
+        "maxInvestmentPercentage": 40
+      }
+  auth:
+    type: bearer
+    token: "{{ownerToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

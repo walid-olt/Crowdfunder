@@ -1,0 +1,17 @@
+info:
+  name: Cap table (OWNER)
+  type: http
+  seq: 7
+
+http:
+  method: GET
+  url: "{{baseUrl}}projects/{{exampleProjectId}}/cap-table"
+  auth:
+    type: bearer
+    token: "{{ownerToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

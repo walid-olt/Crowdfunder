@@ -1,0 +1,27 @@
+info:
+  name: Create project (OWNER)
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{baseUrl}}projects"
+  body:
+    type: json
+    data: |
+      {
+        "title": "Solar Microgrid",
+        "description": "Community solar microgrid for rural areas",
+        "targetCapital": 50000,
+        "ownerInvestment": 5000,
+        "maxInvestmentPercentage": 50
+      }
+  auth:
+    type: bearer
+    token: "{{ownerToken}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,40 @@
+opencollection: 1.0.0
+
+info:
+  name: Crowdfunder
+config:
+  proxy:
+    inherit: true
+    config:
+      protocol: http
+      hostname: ""
+      port: ""
+      auth:
+        username: ""
+        password: ""
+      bypassProxy: ""
+
+request:
+  variables:
+    - name: baseUrl
+      value: http://localhost:5000/
+    - name: ownerToken
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ZDI1OGE4ZTk0OGQ3MjkwMWRjZjkzNCIsImVtYWlsIjoid2FsaWRAZXhhbXBsZS5jb20iLCJyb2xlIjoiT1dORVIiLCJpYXQiOjE3NzUzOTI5MzYsImV4cCI6MTc3NTk5NzczNn0.Tvyu5yVyCRb09NaujgsGsRRloU7XQHv5GLuBRx_Ksyg
+    - name: exampleOwnerId
+      value: 9cc63b19801af2a1a239556
+    - name: investorToken
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2M2NDA0OTgwMWFmMmExYTIzOTU1OSIsImVtYWlsIjoiaW52ZXN0b3JAZXhhbXBsZS5jb20iLCJyb2xlIjoiSU5WRVNUT1IiLCJpYXQiOjE3NzUwMDI2MjgsImV4cCI6MTc3NTYwNzQyOH0.jJW67hz5HfHlBw5wGU2akqkv4S3m5DcfA6VfnB3ZNOs
+    - name: exampleInvestorId
+      value: 69cc64049801af2a1a239559
+    - name: exampleProjectId
+      value: 69cc64049801af2a1a239560
+    - name: adminToken
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Y2M2NDZkOTgwMWFmMmExYTIzOTU1YyIsImVtYWlsIjoiYWRtaW5AZXhhbXBsZS5jb20iLCJyb2xlIjoiQURNSU4iLCJpYXQiOjE3NzUwMDI3MzMsImV4cCI6MTc3NTYwNzUzM30.GyjqHOA37WmzQdRkQ3hf1u5WhQd8ceCIEbco8fYQw40
+    - name: exampleAdminId
+      value: 69cc646d9801af2a1a23955c
+bundled: false
+extensions:
+  bruno:
+    ignore:
+      - node_modules
+      - .git

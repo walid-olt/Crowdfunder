@@ -5,7 +5,9 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch ./src/server.ts"
+    "dev": "tsx watch ./src/server.ts",
+    "db:seed": "tsx ./src/scripts/db-seed.ts",
+    "db:clear": "tsx ./src/scripts/db-clear.ts"
   },
   "keywords": [],
   "author": "",
