@@ -35,7 +35,9 @@ class AppError extends Error implements IAppError {
     this.status = "error";
     this.code = code;
     this.message = message;
-    this.errors = errors;
+    if (errors !== undefined) {
+      this.errors = errors;
+    }
   }
 }
 
@@ -52,12 +54,14 @@ class BadRequestError extends AppError {
 }
 
 class ValidationError extends AppError {
-  public errors?: string[];
+  declare public errors?: string[];
   constructor(message: string = "Validation error", zodIssues?: ZodIssue[]) {
     super(422, ERROR_CODES.VALIDATION_ERROR, message, zodIssues);
-    this.errors = zodIssues?.map(
-      (issue) => `${issue.path.join(".")}: ${issue.message}`,
-    );
+    if (zodIssues !== undefined) {
+      this.errors = zodIssues.map(
+        (issue) => `${issue.path.join(".")}: ${issue.message}`,
+      );
+    }
   }
 }
 

@@ -29,4 +29,6 @@ export const ownerIdParamsSchema = z.object({
   }),
 });
 
-export type InvestInProjectInput = z.infer<typeof investInProjectRequestSchema>["body"];
+export type InvestInProjectInput = z.infer<
+  typeof investInProjectRequestSchema
+>["body"];

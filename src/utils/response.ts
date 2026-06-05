@@ -15,7 +15,7 @@ export const sendResponse = <T>(
 ): Response => {
   const responseBody: ApiResponse<T> = {
     status: 'success',
-    message,
+    ...(message !== undefined && { message }),
     // If data is an array, automatically include a 'results' count
     ...(Array.isArray(data) && { results: data.length }),
     data,

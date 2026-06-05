@@ -1,6 +1,10 @@
 # Crowdfunder
 This is a simple crowdfunding platform built with Node.js, Express, and MongoDB. It allows users to create projects, invest in them, and manage their portfolios along with role-based access control for Project Owners, Investors, and Administrators.
 
+# API specification
+
+The OpenAPI document for frontend/backend integration is available at `openapi.yaml`.
+
 # Diagrams
 
 ## class

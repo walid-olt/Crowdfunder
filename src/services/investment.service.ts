@@ -2,7 +2,12 @@ import { Types } from "mongoose";
 import investmentRepository from "../repositories/investment.repo.js";
 import { projectRepository } from "../repositories/project.repo.js";
 import UserRepo from "../repositories/user.repo.js";
-import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "../utils/errors.js";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from "../utils/errors.js";
 
 const round2 = (value: number) => Math.round(value * 100) / 100;
 
@@ -32,13 +37,10 @@ const investInProject = async (payload: {
     throw new ForbiddenError("Only INVESTOR users can invest");
   }
 
-  const maxAllowedByProject = (project.targetCapital * project.maxInvestmentPercentage) / 100;
-  const existingTotal = await investmentRepository.getTotalByInvestorAndProject(
-    payload.investorId,
-    payload.projectId,
-  );
+  const maxAllowedByProject =
+    (project.targetCapital / 100) * project.maxInvestmentPercentage;
 
-  if (existingTotal + payload.amount > maxAllowedByProject) {
+  if (payload.amount > maxAllowedByProject) {
     throw new ConflictError(
       `Investment exceeds max allowed total of ${project.maxInvestmentPercentage}% for this project`,
     );
@@ -83,8 +85,12 @@ const getInvestorPortfolio = async (investorId: string) => {
     throw new ConflictError("Requested user is not an INVESTOR");
   }
 
-  const items = await investmentRepository.getInvestorPortfolioByInvestorId(investorId);
-  const totalInvested = items.reduce((sum: number, item: any) => sum + Number(item.amount || 0), 0);
+  const items =
+    await investmentRepository.getInvestorPortfolioByInvestorId(investorId);
+  const totalInvested = items.reduce(
+    (sum: number, item: any) => sum + Number(item.amount || 0),
+    0,
+  );
 
   return {
     investor: {

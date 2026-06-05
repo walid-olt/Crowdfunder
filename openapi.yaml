@@ -1,0 +1,963 @@
+openapi: 3.1.0
+info:
+  title: Crowdfunder API
+  version: 1.0.0
+  description: REST API for authentication, users, projects, investments, and portfolios.
+servers:
+  - url: http://localhost:3000
+tags:
+  - name: Health
+  - name: Auth
+  - name: Users
+  - name: Projects
+  - name: Portfolio
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      security: []
+      responses:
+        "200":
+          description: Server is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequestBody"
+      responses:
+        "201":
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "409":
+          $ref: "#/components/responses/ConflictError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with email and password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequestBody"
+      responses:
+        "200":
+          description: User logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Current user retrieved successfully
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: "#/components/schemas/SafeUser"
+                        required: [user]
+                    required: [status, data]
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+  /users:
+    get:
+      tags: [Users]
+      summary: List users (admin only)
+      parameters:
+        - in: query
+          name: role
+          schema:
+            $ref: "#/components/schemas/Role"
+      responses:
+        "200":
+          description: User list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      results:
+                        type: integer
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/SafeUser"
+                    required: [status, data]
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+  /users/{userId}:
+    get:
+      tags: [Users]
+      summary: Get user profile summary (self or admin)
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      responses:
+        "200":
+          description: User summary
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/UserSummary"
+                    required: [status, data]
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /users/{userId}/balance:
+    post:
+      tags: [Users]
+      summary: Add or deduct investor balance (self only)
+      parameters:
+        - $ref: "#/components/parameters/UserId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBalanceRequestBody"
+      responses:
+        "200":
+          description: Updated user balance
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/SafeUser"
+                    required: [status, data]
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "409":
+          $ref: "#/components/responses/ConflictError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /projects/open:
+    get:
+      tags: [Projects]
+      summary: List open projects
+      responses:
+        "200":
+          description: Open projects
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      results:
+                        type: integer
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Project"
+                    required: [status, data]
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+  /projects/mine:
+    get:
+      tags: [Projects]
+      summary: List owner projects
+      responses:
+        "200":
+          description: Owner projects
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      results:
+                        type: integer
+                      data:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Project"
+                    required: [status, data]
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+  /projects:
+    post:
+      tags: [Projects]
+      summary: Create project (owner only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProjectRequestBody"
+      responses:
+        "201":
+          description: Project created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Project created successfully
+                      data:
+                        $ref: "#/components/schemas/Project"
+                    required: [status, data]
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /projects/{projectId}:
+    get:
+      tags: [Projects]
+      summary: Get project by id
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Project details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/Project"
+                    required: [status, data]
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    patch:
+      tags: [Projects]
+      summary: Update open project (owner only)
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProjectRequestBody"
+      responses:
+        "200":
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Project updated successfully
+                      data:
+                        $ref: "#/components/schemas/Project"
+                    required: [status, data]
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "409":
+          $ref: "#/components/responses/ConflictError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+    delete:
+      tags: [Projects]
+      summary: Delete open project (owner only)
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Project deleted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Project deleted successfully
+                      data:
+                        $ref: "#/components/schemas/Project"
+                    required: [status, data]
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "409":
+          $ref: "#/components/responses/ConflictError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /projects/{projectId}/close:
+    post:
+      tags: [Projects]
+      summary: Manually close project (owner only)
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Project closed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Project closed successfully
+                      data:
+                        $ref: "#/components/schemas/Project"
+                    required: [status, data]
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "409":
+          $ref: "#/components/responses/ConflictError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /projects/{projectId}/cap-table:
+    get:
+      tags: [Projects]
+      summary: Get project capitalization table
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      responses:
+        "200":
+          description: Capitalization table
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/CapTableResponseData"
+                    required: [status, data]
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /projects/{projectId}/invest:
+    post:
+      tags: [Projects]
+      summary: Invest in project (investor only)
+      parameters:
+        - $ref: "#/components/parameters/ProjectId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InvestRequestBody"
+      responses:
+        "201":
+          description: Investment processed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Investment processed successfully
+                      data:
+                        $ref: "#/components/schemas/InvestResponseData"
+                    required: [status, data]
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "409":
+          $ref: "#/components/responses/ConflictError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /portfolio/me:
+    get:
+      tags: [Portfolio]
+      summary: Get current user portfolio (owner or investor)
+      responses:
+        "200":
+          description: Portfolio data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessEnvelope"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+  /portfolio/investors/{investorId}:
+    get:
+      tags: [Portfolio]
+      summary: Get investor portfolio (self, owner, or admin)
+      parameters:
+        - $ref: "#/components/parameters/InvestorId"
+      responses:
+        "200":
+          description: Investor portfolio
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/InvestorPortfolioResponseData"
+                    required: [status, data]
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "409":
+          $ref: "#/components/responses/ConflictError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /portfolio/owners/{ownerId}:
+    get:
+      tags: [Portfolio]
+      summary: Get owner portfolio (self or admin)
+      parameters:
+        - $ref: "#/components/parameters/OwnerId"
+      responses:
+        "200":
+          description: Owner portfolio
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/SuccessEnvelope"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/OwnerPortfolioResponseData"
+                    required: [status, data]
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "403":
+          $ref: "#/components/responses/ForbiddenError"
+        "404":
+          $ref: "#/components/responses/NotFoundError"
+        "409":
+          $ref: "#/components/responses/ConflictError"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    UserId:
+      in: path
+      name: userId
+      required: true
+      schema:
+        $ref: "#/components/schemas/ObjectId"
+    ProjectId:
+      in: path
+      name: projectId
+      required: true
+      schema:
+        $ref: "#/components/schemas/ObjectId"
+    InvestorId:
+      in: path
+      name: investorId
+      required: true
+      schema:
+        $ref: "#/components/schemas/ObjectId"
+    OwnerId:
+      in: path
+      name: ownerId
+      required: true
+      schema:
+        $ref: "#/components/schemas/ObjectId"
+  responses:
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    UnauthorizedError:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ForbiddenError:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFoundError:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ConflictError:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    ObjectId:
+      type: string
+      pattern: "^[a-fA-F0-9]{24}$"
+      example: 661e50d6d2d6cbf70f88ec11
+    Role:
+      type: string
+      enum: [OWNER, INVESTOR, ADMIN]
+    SuccessEnvelope:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success]
+        message:
+          type: string
+        results:
+          type: integer
+        data: {}
+      required: [status]
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [error]
+        message:
+          type: string
+        code:
+          type: string
+        errors:
+          type: array
+          items:
+            type: string
+        stack:
+          type: string
+      required: [status, message]
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success]
+        message:
+          type: string
+          example: Server is healthy
+      required: [status, message]
+    SafeUser:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/ObjectId"
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          $ref: "#/components/schemas/Role"
+        balance:
+          type: number
+      required: [id, name, email, role]
+    RegisterRequestBody:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+        role:
+          $ref: "#/components/schemas/Role"
+        balance:
+          type: number
+          minimum: 0
+      required: [name, email, password, role]
+      additionalProperties: false
+    LoginRequestBody:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+          maxLength: 128
+      required: [email, password]
+      additionalProperties: false
+    AuthResponse:
+      allOf:
+        - $ref: "#/components/schemas/SuccessEnvelope"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                token:
+                  type: string
+                user:
+                  $ref: "#/components/schemas/SafeUser"
+              required: [token, user]
+          required: [status, data]
+    UpdateBalanceRequestBody:
+      type: object
+      properties:
+        operation:
+          type: string
+          enum: [add, deduct]
+        amount:
+          type: number
+      required: [operation, amount]
+      additionalProperties: false
+    Project:
+      type: object
+      properties:
+        _id:
+          $ref: "#/components/schemas/ObjectId"
+        title:
+          type: string
+        description:
+          type: string
+        currentCapital:
+          type: number
+        targetCapital:
+          type: number
+        ownerId:
+          $ref: "#/components/schemas/ObjectId"
+        status:
+          type: string
+          enum: [OPEN, CLOSED]
+        maxInvestmentPercentage:
+          type: number
+        ownerInvestment:
+          type: number
+        percentageFunded:
+          type: number
+      required:
+        - _id
+        - title
+        - description
+        - currentCapital
+        - targetCapital
+        - ownerId
+        - status
+        - maxInvestmentPercentage
+        - ownerInvestment
+    CreateProjectRequestBody:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        description:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        targetCapital:
+          type: number
+          exclusiveMinimum: 0
+        ownerInvestment:
+          type: number
+          minimum: 0
+          default: 0
+        maxInvestmentPercentage:
+          type: number
+          minimum: 1
+          maximum: 100
+          default: 50
+      required: [title, description, targetCapital]
+      additionalProperties: false
+    UpdateProjectRequestBody:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 160
+        description:
+          type: string
+          minLength: 1
+          maxLength: 4000
+        targetCapital:
+          type: number
+          exclusiveMinimum: 0
+        maxInvestmentPercentage:
+          type: number
+          minimum: 1
+          maximum: 100
+      additionalProperties: false
+    InvestRequestBody:
+      type: object
+      properties:
+        amount:
+          type: number
+          exclusiveMinimum: 0
+      required: [amount]
+      additionalProperties: false
+    InvestResponseData:
+      type: object
+      properties:
+        investment:
+          type: object
+          properties:
+            _id:
+              $ref: "#/components/schemas/ObjectId"
+            projectId:
+              $ref: "#/components/schemas/ObjectId"
+            investorId:
+              $ref: "#/components/schemas/ObjectId"
+            amount:
+              type: number
+            percentageOwned:
+              type: number
+          required: [_id, projectId, investorId, amount]
+        project:
+          $ref: "#/components/schemas/Project"
+      required: [investment, project]
+    CapTableRow:
+      type: object
+      properties:
+        investorId:
+          $ref: "#/components/schemas/ObjectId"
+        amount:
+          type: number
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          $ref: "#/components/schemas/Role"
+        ownershipPercentage:
+          type: number
+      required: [investorId, amount, name, email, role, ownershipPercentage]
+    CapTableResponseData:
+      type: object
+      properties:
+        project:
+          type: object
+          properties:
+            id:
+              $ref: "#/components/schemas/ObjectId"
+            title:
+              type: string
+            targetCapital:
+              type: number
+            currentCapital:
+              type: number
+            status:
+              type: string
+              enum: [OPEN, CLOSED]
+            maxInvestmentPercentage:
+              type: number
+          required: [id, title, targetCapital, currentCapital, status, maxInvestmentPercentage]
+        capTable:
+          type: array
+          items:
+            $ref: "#/components/schemas/CapTableRow"
+      required: [project, capTable]
+    InvestorPortfolioItem:
+      type: object
+      properties:
+        projectId:
+          $ref: "#/components/schemas/ObjectId"
+        amount:
+          type: number
+        projectTitle:
+          type: string
+        projectStatus:
+          type: string
+          enum: [OPEN, CLOSED]
+        targetCapital:
+          type: number
+        ownershipPercentage:
+          type: number
+      required: [projectId, amount, projectTitle, projectStatus, targetCapital, ownershipPercentage]
+    InvestorPortfolioResponseData:
+      type: object
+      properties:
+        investor:
+          type: object
+          properties:
+            id:
+              $ref: "#/components/schemas/ObjectId"
+            name:
+              type: string
+            email:
+              type: string
+              format: email
+          required: [id, name, email]
+        totalInvested:
+          type: number
+        portfolio:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvestorPortfolioItem"
+      required: [investor, totalInvested, portfolio]
+    OwnerProjectItem:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/ObjectId"
+        title:
+          type: string
+        status:
+          type: string
+          enum: [OPEN, CLOSED]
+        targetCapital:
+          type: number
+        currentCapital:
+          type: number
+        percentageFunded:
+          type: number
+      required: [id, title, status, targetCapital, currentCapital, percentageFunded]
+    OwnerPortfolioResponseData:
+      type: object
+      properties:
+        owner:
+          type: object
+          properties:
+            id:
+              $ref: "#/components/schemas/ObjectId"
+            name:
+              type: string
+            email:
+              type: string
+              format: email
+          required: [id, name, email]
+        totalRaised:
+          type: number
+        projects:
+          type: array
+          items:
+            $ref: "#/components/schemas/OwnerProjectItem"
+      required: [owner, totalRaised, projects]
+    UserSummary:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          $ref: "#/components/schemas/Role"
+        balance:
+          type: number
+        totalInvested:
+          type: number
+        projectsOwned:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        investmentsMade:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      required: [name, email, role]
