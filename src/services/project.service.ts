@@ -1,7 +1,12 @@
 import { projectRepository } from "../repositories/project.repo.js";
 import investmentRepository from "../repositories/investment.repo.js";
 import UserRepo from "../repositories/user.repo.js";
-import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "../utils/errors.js";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+} from "../utils/errors.js";
 
 export type CreateProjectPayload = {
   ownerId: string;
@@ -26,10 +31,12 @@ const round2 = (value: number) => Math.round(value * 100) / 100;
 const createProject = async (payload: CreateProjectPayload) => {
   const owner = await UserRepo.findById(payload.ownerId);
   if (!owner) throw new NotFoundError("Owner not found");
-  if (owner.role !== "OWNER") throw new ForbiddenError("Only project owners can create projects");
+  if (owner.role !== "OWNER")
+    throw new ForbiddenError("Only project owners can create projects");
 
   const ownerInvestment = payload.ownerInvestment ?? 0;
-  if (ownerInvestment < 0) throw new BadRequestError("ownerInvestment must be >= 0");
+  if (ownerInvestment < 0)
+    throw new BadRequestError("ownerInvestment must be >= 0");
   if (ownerInvestment > payload.targetCapital) {
     throw new BadRequestError("ownerInvestment cannot exceed targetCapital");
   }
@@ -93,20 +100,31 @@ const updateProject = async (payload: UpdateProjectPayload) => {
     payload.targetCapital !== undefined &&
     payload.targetCapital < project.currentCapital
   ) {
-    throw new BadRequestError("targetCapital cannot be less than currentCapital");
+    throw new BadRequestError(
+      "targetCapital cannot be less than currentCapital",
+    );
   }
 
-  const updated = await projectRepository.updateByOwnerIfOpen(payload.projectId, payload.ownerId, {
-    ...(payload.title !== undefined && { title: payload.title }),
-    ...(payload.description !== undefined && { description: payload.description }),
-    ...(payload.targetCapital !== undefined && { targetCapital: payload.targetCapital }),
-    ...(payload.targetCapital !== undefined && payload.targetCapital === project.currentCapital
-      ? { status: "CLOSED" }
-      : {}),
-    ...(payload.maxInvestmentPercentage !== undefined && {
-      maxInvestmentPercentage: payload.maxInvestmentPercentage,
-    }),
-  });
+  const updated = await projectRepository.updateByOwnerIfOpen(
+    payload.projectId,
+    payload.ownerId,
+    {
+      ...(payload.title !== undefined && { title: payload.title }),
+      ...(payload.description !== undefined && {
+        description: payload.description,
+      }),
+      ...(payload.targetCapital !== undefined && {
+        targetCapital: payload.targetCapital,
+      }),
+      ...(payload.targetCapital !== undefined &&
+      payload.targetCapital === project.currentCapital
+        ? { status: "CLOSED" }
+        : {}),
+      ...(payload.maxInvestmentPercentage !== undefined && {
+        maxInvestmentPercentage: payload.maxInvestmentPercentage,
+      }),
+    },
+  );
 
   if (!updated) {
     throw new ConflictError("Project cannot be updated");
@@ -126,7 +144,10 @@ const deleteProject = async (projectId: string, ownerId: string) => {
     throw new ConflictError("Only OPEN projects can be deleted");
   }
 
-  const deleted = await projectRepository.deleteByOwnerIfOpen(projectId, ownerId);
+  const deleted = await projectRepository.deleteByOwnerIfOpen(
+    projectId,
+    ownerId,
+  );
   if (!deleted) {
     throw new ConflictError("Project cannot be deleted");
   }
@@ -134,6 +155,17 @@ const deleteProject = async (projectId: string, ownerId: string) => {
   await investmentRepository.deleteByProjectId(projectId);
 
   return deleted;
+};
+
+const getAllProjects = async () => {
+  const projects = await projectRepository.findAll();
+  return projects.map((project) => ({
+    ...project.toObject(),
+    percentageFunded:
+      project.targetCapital > 0
+        ? round2((project.currentCapital / project.targetCapital) * 100)
+        : 0,
+  }));
 };
 
 const closeProject = async (projectId: string, ownerId: string) => {
@@ -198,6 +230,7 @@ const getCapTable = async (projectId: string) => {
 };
 
 export default {
+  getAllProjects,
   createProject,
   listOpenProjects,
   getProjectById,

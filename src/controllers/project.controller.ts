@@ -2,7 +2,10 @@ import type { Handler } from "express";
 import { catchAsync } from "../middleware/global.js";
 import { sendResponse } from "../utils/response.js";
 import projectService from "../services/project.service.js";
-import type { CreateProjectInput, UpdateProjectInput } from "../schemas/project.schemas.js";
+import type {
+  CreateProjectInput,
+  UpdateProjectInput,
+} from "../schemas/project.schemas.js";
 
 const createProject: Handler = catchAsync(async (req, res) => {
   const ownerId = req.user?.id as string;
@@ -42,8 +45,12 @@ const updateProject: Handler = catchAsync(async (req, res) => {
     projectId,
     ownerId,
     ...(payload.title !== undefined && { title: payload.title }),
-    ...(payload.description !== undefined && { description: payload.description }),
-    ...(payload.targetCapital !== undefined && { targetCapital: payload.targetCapital }),
+    ...(payload.description !== undefined && {
+      description: payload.description,
+    }),
+    ...(payload.targetCapital !== undefined && {
+      targetCapital: payload.targetCapital,
+    }),
     ...(payload.maxInvestmentPercentage !== undefined && {
       maxInvestmentPercentage: payload.maxInvestmentPercentage,
     }),
@@ -74,7 +81,12 @@ const getCapTable: Handler = catchAsync(async (req, res) => {
   return sendResponse(res, 200, result);
 });
 
+const getAllProjects: Handler = catchAsync(async (_req, res) => {
+  return sendResponse(res, 200, await projectService.getAllProjects());
+});
+
 export default {
+  getAllProjects,
   createProject,
   listOpenProjects,
   getProjectById,

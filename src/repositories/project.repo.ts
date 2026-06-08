@@ -12,6 +12,9 @@ export class ProjectRepository extends BaseRepository<Iproject> {
   async findOpenProjects() {
     return this.findAll({ status: "OPEN" });
   }
+  async findAllProjects() {
+    return this.findAll();
+  }
 
   async findByOwnerId(ownerId: string) {
     return this.findAll({ ownerId });
@@ -92,4 +95,3 @@ export class ProjectRepository extends BaseRepository<Iproject> {
 }
 
 export const projectRepository = new ProjectRepository(Project);
-

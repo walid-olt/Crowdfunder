@@ -19,6 +19,11 @@ const router: Router = Router();
 router.use(requireToken, authenticate);
 
 router.get("/open", projectController.listOpenProjects);
+router.get(
+  "/",
+  authorize(["INVESTOR", "ADMIN"]),
+  projectController.getAllProjects,
+);
 router.get("/mine", authorize(["OWNER"]), projectController.listMyProjects);
 
 router.post(
